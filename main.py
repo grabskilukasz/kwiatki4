@@ -51,11 +51,11 @@ def predict_species(item: IrisItem):
         # Dokonaj predykcji przy użyciu wcześniej wytrenowanego modelu
         prediction = knc.predict(input_data)
 
-        conn = sqlite3.connect("test.db")
+        conn = sqlite3.connect("predictions.db")
         cursor = conn.cursor()
         cursor.execute(
             """
-            CREATE TABLE IF NOT EXISTS test (
+            CREATE TABLE IF NOT EXISTS predictions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 sepal_length_t FLOAT,
                 sepal_width_t FLOAT,
@@ -66,7 +66,7 @@ def predict_species(item: IrisItem):
         """
         )
         cursor.execute(
-            "INSERT INTO test (sepal_length_t, sepal_width_t, petal_length_t, petal_width_t, prediction_t) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO predictions (sepal_length_t, sepal_width_t, petal_length_t, petal_width_t, prediction_t) VALUES (?, ?, ?, ?, ?)",
             (
                 (item.sepal_length),
                 (item.sepal_width),
@@ -75,16 +75,29 @@ def predict_species(item: IrisItem):
                 (prediction[0]),
             ),
         )
+        last_id = cursor.lastrowid
 
         conn.commit()
         conn.close()
 
         # Zwróć wynik predykcji
-        return f"predicted_species: {prediction[0]}"
+        return f"predicted_species: {prediction[0]}, ID:{last_id}"
 
     except Exception as e:
         # W przypadku błędu zwróć informację o błędzie
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+
+@app.post("/read")
+def read(id):
+    conn = sqlite3.connect("predictions.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT * FROM predictions WHERE id = ?", (id,))
+    results = cursor.fetchone()
+
+    return results
+
 
 
 # @app.post("/respond")
@@ -108,15 +121,3 @@ def predict_species(item: IrisItem):
 #     return {"response": response_message}
 
 
-@app.get("/read")
-def respond():
-    conn = sqlite3.connect("example.db")
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT * FROM numbers")
-    results = cursor.fetchall()
-
-    for row in results:
-        print(row)
-
-    return row
