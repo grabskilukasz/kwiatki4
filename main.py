@@ -48,37 +48,64 @@ def predict_species(item: IrisItem):
     try:
         # Przygotuj dane wejściowe dla modelu
         input_data = [[item.sepal_length, item.sepal_width, item.petal_length, item.petal_width]]
-
         # Dokonaj predykcji przy użyciu wcześniej wytrenowanego modelu
         prediction = knc.predict(input_data)
 
+        conn = sqlite3.connect("test.db")
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS test (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sepal_length_t FLOAT,
+                sepal_width_t FLOAT,
+                petal_length_t FLOAT,
+                petal_width_t FLOAT,
+                prediction_t STRING
+            )
+        """
+        )
+        cursor.execute(
+            "INSERT INTO test (sepal_length_t, sepal_width_t, petal_length_t, petal_width_t, prediction_t) VALUES (?, ?, ?, ?, ?)",
+            (
+                (item.sepal_length),
+                (item.sepal_width),
+                (item.petal_length),
+                (item.petal_width),
+                (prediction[0]),
+            ),
+        )
+
+        conn.commit()
+        conn.close()
+
         # Zwróć wynik predykcji
-        return {"predicted_species": prediction[0]}
+        return f"predicted_species: {prediction[0]}"
 
     except Exception as e:
         # W przypadku błędu zwróć informację o błędzie
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 
-@app.post("/respond")
-def respond(number: int):
-    response_message = f"Received number: {number}."
-
-    conn = sqlite3.connect("example.db")
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS numbers (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            number INTEGER NOT NULL
-        )
-    """
-    )
-    cursor.execute("INSERT INTO numbers (number) VALUES (?)", (number,))
-    conn.commit()
-    conn.close()
-
-    return {"response": response_message}
+# @app.post("/respond")
+# def respond(number: int):
+#     response_message = f"Received number: {number}."
+#
+#     conn = sqlite3.connect("example.db")
+#     cursor = conn.cursor()
+#     cursor.execute(
+#         """
+#         CREATE TABLE IF NOT EXISTS numbers (
+#             id INTEGER PRIMARY KEY AUTOINCREMENT,
+#             number INTEGER NOT NULL
+#         )
+#     """
+#     )
+#     cursor.execute("INSERT INTO numbers (number) VALUES (?)", (number,))
+#     conn.commit()
+#     conn.close()
+#
+#     return {"response": response_message}
 
 
 @app.get("/read")
