@@ -26,7 +26,7 @@ def root():
 
 @app.get("/train")
 def train():
-    df = pd.read_csv("Iris.csv")
+    df = pd.read_csv("input_data/Iris.csv")
     X = df.drop(["Id", "Species"], axis=1)
     y = df["Species"]
 
@@ -37,7 +37,7 @@ def train():
     acc_knn = metrics.accuracy_score(y_pred, y_test)
     print("The accuracy of the KNN is", acc_knn)
 
-    with open("knn_model.pkl", "wb") as file:
+    with open("input_data/knn_model.pkl", "wb") as file:
         pickle.dump(knc, file)
 
     return f" The accuracy of the KNN is {acc_knn}"
@@ -51,7 +51,7 @@ def predict_species(item: IrisItem):
         # Dokonaj predykcji przy użyciu wcześniej wytrenowanego modelu
         prediction = knc.predict(input_data)
 
-        conn = sqlite3.connect("predictions.db")
+        conn = sqlite3.connect("datavase/predictions.db")
         cursor = conn.cursor()
         cursor.execute(
             """
@@ -89,7 +89,7 @@ def predict_species(item: IrisItem):
 
 @app.post("/read")
 def read(id):
-    conn = sqlite3.connect("predictions.db")
+    conn = sqlite3.connect("datavase/predictions.db")
     cursor = conn.cursor()
 
     cursor.execute(
@@ -99,25 +99,5 @@ def read(id):
     return results
 
 
-
-# @app.post("/respond")
-# def respond(number: int):
-#     response_message = f"Received number: {number}."
-#
-#     conn = sqlite3.connect("example.db")
-#     cursor = conn.cursor()
-#     cursor.execute(
-#         """
-#         CREATE TABLE IF NOT EXISTS numbers (
-#             id INTEGER PRIMARY KEY AUTOINCREMENT,
-#             number INTEGER NOT NULL
-#         )
-#     """
-#     )
-#     cursor.execute("INSERT INTO numbers (number) VALUES (?)", (number,))
-#     conn.commit()
-#     conn.close()
-#
-#     return {"response": response_message}
 
 

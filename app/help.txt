@@ -1,0 +1,2 @@
+Formatowanie plików:
+black -l 100 .
